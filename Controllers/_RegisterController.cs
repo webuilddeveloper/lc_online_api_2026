@@ -255,11 +255,11 @@ namespace cms_api.Controllers
                 else
                 {
 
-                    if (!string.IsNullOrEmpty(value.username)) { filter = filter & Builders<Register>.Filter.Regex("username", new BsonRegularExpression(string.Format(".*{0}.*", value.username), "i")); }
-                    if (!string.IsNullOrEmpty(value.password)) { filter = filter & Builders<Register>.Filter.Regex("password", value.password); }
-                    if (!string.IsNullOrEmpty(value.code)) { filter = filter & Builders<Register>.Filter.Regex("code", value.code); }
-                    if (!string.IsNullOrEmpty(value.category)) { filter = filter & Builders<Register>.Filter.Regex("category", value.category); }
-                    if (!string.IsNullOrEmpty(value.createBy)) { filter = filter & Builders<Register>.Filter.Regex("createBy", new BsonRegularExpression(string.Format(".*{0}.*", value.createBy), "i")); }
+                    //if (!string.IsNullOrEmpty(value.username)) { filter = filter & Builders<Register>.Filter.Regex("username", new BsonRegularExpression(string.Format(".*{0}.*", value.username), "i")); }
+                    //if (!string.IsNullOrEmpty(value.password)) { filter = filter & Builders<Register>.Filter.Regex("password", value.password); }
+                    //if (!string.IsNullOrEmpty(value.code)) { filter = filter & Builders<Register>.Filter.Regex("code", value.code); }
+                    //if (!string.IsNullOrEmpty(value.category)) { filter = filter & Builders<Register>.Filter.Regex("category", value.category); }
+                    //if (!string.IsNullOrEmpty(value.createBy)) { filter = filter & Builders<Register>.Filter.Regex("createBy", new BsonRegularExpression(string.Format(".*{0}.*", value.createBy), "i")); }
 
                     var ds = value.startDate.toDateFromString().toBetweenDate();
                     var de = value.endDate.toDateFromString().toBetweenDate();

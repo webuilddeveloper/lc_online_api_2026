@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Mail;
 using System.Text;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using cms_api.Extension;
 using cms_api.Models;
@@ -44,6 +45,22 @@ namespace mobile_api.Controllers
                         }
                     }
 
+                    {
+                        var filter = (Builders<BsonDocument>.Filter.Eq("email", value.email) & Builders<BsonDocument>.Filter.Ne("status", "D"));
+                        if (col.Find(filter).Any())
+                        {
+                            return new Response { status = "E", message = $"email: {value.email} is already in use in the system." };
+                        }
+                    }
+
+                    {
+                        var filter = (Builders<BsonDocument>.Filter.Eq("email", value.email) & Builders<BsonDocument>.Filter.Eq("status", "D"));
+                        if (col.Find(filter).Any())
+                        {
+                            return new Response { status = "E", message = $"email: {value.email} is already in use in the system." };
+                        }
+                    }
+
                     //{
                     //    var filter = Builders<BsonDocument>.Filter.Eq("username", value.username) & Builders<BsonDocument>.Filter.Eq("category", value.category) & Builders<BsonDocument>.Filter.Ne("status", "D");
                     //    if (col.Find(filter).Any())
@@ -74,7 +91,7 @@ namespace mobile_api.Controllers
                     {
                         { "code", value.code },
                         { "imageUrl", value.imageUrl },
-                        //{ "username", value.username },
+                        { "username", value.category != "guest" ? value.username : "" },
                         { "password", value.password },
                         { "createBy", value.createBy },
                         { "category", (value.category ?? "") != "" ? value.category : "guest"},
@@ -86,7 +103,7 @@ namespace mobile_api.Controllers
                         { "docDate", DateTime.Now.Date.AddHours(7) },
                         { "docTime", DateTime.Now.toTimeStringFromDate() },
                         { "isActive", false },
-                        { "status", value.status },
+                        { "status", (value.status ?? "") != "" ? value.status : "A"},
                         { "prefixName", value.prefixName },
                         { "firstName", value.firstName },
                         { "lastName", value.lastName },
@@ -319,14 +336,14 @@ namespace mobile_api.Controllers
             {
                 value.logCreate("register/update", value.code);
 
-                var col2 = new Database().MongoClient("register");
-                var filter2 = Builders<BsonDocument>.Filter.Eq("email", value.email);
+                //var col2 = new Database().MongoClient("register");
+                //var filter2 = Builders<BsonDocument>.Filter.Eq("email", value.email);
 
 
                 // start update linkAccount
                 var col = new Database().MongoClient("register");
 
-                if (!string.IsNullOrEmpty(value.code))
+                if (!string.IsNullOrEmpty(value.email))
                 {
                     var filter = Builders<BsonDocument>.Filter.Ne("status", "D") & Builders<BsonDocument>.Filter.Eq("code", value.code);
                     doc = col.Find(filter).FirstOrDefault();
@@ -358,7 +375,7 @@ namespace mobile_api.Controllers
                         doc["username"] = value.username;
                     }
                     doc["imageUrl"] = value.imageUrl;
-                    doc["category"] = value.category;
+                    //doc["category"] = value.category;
                     doc["prefixName"] = value.prefixName;
                     doc["firstName"] = value.firstName;
                     doc["lastName"] = value.lastName;
@@ -369,7 +386,7 @@ namespace mobile_api.Controllers
                     doc["googleID"] = value.googleID;
                     doc["lineID"] = value.lineID;
                     doc["line"] = value.line;
-                    doc["password"] = value.password;
+                    //doc["password"] = value.password;
                     doc["sex"] = value.sex;
                     doc["soi"] = value.soi;
                     doc["address"] = value.address;
@@ -384,14 +401,14 @@ namespace mobile_api.Controllers
                     doc["postnoCode"] = value.postnoCode;
                     doc["postno"] = value.postno;
                     doc["idcard"] = value.idcard;
-                    doc["lv0"] = value.lv0;
-                    doc["lv1"] = value.lv1;
-                    doc["lv2"] = value.lv2;
-                    doc["lv3"] = value.lv3;
-                    doc["lv4"] = value.lv4;
-                    doc["description"] = value.description;
+                    //doc["lv0"] = value.lv0;
+                    //doc["lv1"] = value.lv1;
+                    //doc["lv2"] = value.lv2;
+                    //doc["lv3"] = value.lv3;
+                    //doc["lv4"] = value.lv4;
+                    //doc["description"] = value.description;
                     doc["isActive"] = value.isActive;
-                    doc["status"] = value.status;
+                    doc["status"] = value.status != "" ? value.status : "S";
                     doc["updateBy"] = value.updateBy;
                     doc["updateDate"] = DateTime.Now.toStringFromDate();
                     doc["appleID"] = value.appleID;
@@ -407,8 +424,8 @@ namespace mobile_api.Controllers
                 var registerDoc = registerCol.Find(registerFilter).Project(c => new
                 {
                     c.code,
-                    c.username,
-                    c.password,
+                    //c.username,
+                    //c.password,
                     c.status,
                     c.isActive,
                     c.createBy,
@@ -445,12 +462,12 @@ namespace mobile_api.Controllers
                     c.amphoeCode,
                     c.provinceCode,
                     c.postnoCode,
-                    c.idcard,
-                    c.lv0,
-                    c.lv1,
-                    c.lv2,
-                    c.lv3,
-                    c.lv4,
+                    c.idcard
+                    //c.lv0,
+                    //c.lv1,
+                    //c.lv2,
+                    //c.lv3,
+                    //c.lv4,
 
                 }).FirstOrDefault();
 
@@ -524,6 +541,67 @@ namespace mobile_api.Controllers
                 return new Response { status = "E", message = ex.Message };
             }
         }
+
+        // POST /update
+        [HttpPost("cancel")]
+        public ActionResult<Response> CancelAccount([FromBody] Register value)
+        {
+            var doc = new BsonDocument();
+            try
+            {
+
+                // start update linkAccount
+                var col = new Database().MongoClient("register");
+
+                if (!string.IsNullOrEmpty(value.code))
+                {
+                    var filter = Builders<BsonDocument>.Filter.Ne("status", "D") & Builders<BsonDocument>.Filter.Eq("email", value.email) & Builders<BsonDocument>.Filter.Eq("code", value.code);
+                    doc = col.Find(filter).FirstOrDefault();
+                    var model = BsonSerializer.Deserialize<object>(doc);
+
+                    var json = JsonConvert.SerializeObject(model);
+                    var doc1 = new BsonDocument();
+                    var col1 = new Database().MongoClient("_logRegister");
+                    doc1 = new BsonDocument
+                    {
+                        { "code", "".toCode() },
+                        { "step", "cancelAccount" },
+                        { "reasonCancel", value.reasonCancel },
+                        { "raw", json },
+                        { "createBy", value.updateBy },
+                        { "createDate", DateTime.Now.toStringFromDate() },
+                        { "createTime", DateTime.Now.toTimeStringFromDate() },
+                        { "updateBy", value.updateBy },
+                        { "updateDate", DateTime.Now.toStringFromDate() },
+                        { "updateTime", DateTime.Now.toTimeStringFromDate() },
+                        { "docDate", DateTime.Now.Date.AddHours(7) },
+                        { "docTime", DateTime.Now.toTimeStringFromDate() },
+                        { "isActive", true },
+                        { "status", "A" }
+                    };
+                    col1.InsertOne(doc1);
+
+
+                    //doc["reasonCancel"] = value.reasonCancel;
+                    //doc["status"] = "D";
+                    //col.ReplaceOne(filter, doc);
+
+                    col.DeleteOne(Builders<BsonDocument>.Filter.Eq("code", value.code));
+                }
+
+                // end update linkAccount
+
+
+                return new Response { status = "S", message = $"email: {value.email} is delete" };
+            }
+            catch (Exception ex)
+            {
+                return new Response { status = "E", message = ex.Message };
+            }
+        }
+
+
+        //Cancel account
 
         #endregion
 
@@ -1699,12 +1777,22 @@ namespace mobile_api.Controllers
         {
             try
             {
-                var col = new Database().MongoClient<Register>("register");
 
-                var filter = Builders<Register>.Filter.Ne(x => x.status, "D");
-                //filter &= Builders<Register>.Filter.Eq("category", value.category);
+                var col = new Database().MongoClient<Register>("register");
+                {
+                    var filter2 = Builders<Register>.Filter.Eq("status", "D");
+                    if (col.Find(filter2).Any())
+                    {
+                        return new Response { status = "E", message = $"email: {value.email} is no longer in our system or has already been used." };
+                    }
+                }
+
+                var filter = Builders<Register>.Filter.Ne("status", "D");
                 filter &= Builders<Register>.Filter.Eq("email", value.email);
 
+                
+                    //var filter = Builders<BsonDocument>.Filter.Eq("code", value.code);
+                
 
                 if (!string.IsNullOrEmpty(value.category))
                 {
@@ -1934,7 +2022,7 @@ namespace mobile_api.Controllers
                     doc = col.Find(filter).FirstOrDefault();
                     var model = BsonSerializer.Deserialize<object>(doc);
 
-                    return new Response { status = "S", message = "success", jsonData = model.ToJson(), objectData = model };
+                    return new Response { status = "S", message = "เปลี่ยนรหัสผ่านสำเร็จ"};
                 }
 
             }

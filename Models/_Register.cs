@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace cms_api.Models
 {
     [BsonIgnoreExtraElements]
-    public class Register : Identity
+    public class
+        Register : Identity
     {
 
         public Register()
@@ -47,6 +49,7 @@ namespace cms_api.Models
             amphoeCode = "";
             provinceCode = "";
             postnoCode = "";
+            reasonCancel = "";
 
             //linkAccount = "";
             //laserID = "";
@@ -96,6 +99,7 @@ namespace cms_api.Models
         public string amphoeCode { get; set; }
         public string provinceCode { get; set; }
         public string postnoCode { get; set; }
+        public string reasonCancel { get; set; }
 
         //public string linkAccount { get; set; }
         //public string laserID { get; set; }
